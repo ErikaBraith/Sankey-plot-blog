@@ -25,7 +25,7 @@ ratingCluster$cluster =  as.factor(ratingCluster$cluster)
 
 scaled.rate = data.frame(rate)
 
-# I want to add elipses around the cluster
+# I want to eventually add elipses around the cluster
 cluster.plot = ggplot(data = scaled.rate, aes(x = price, y = rating, colour = ratingCluster$cluster)) +
         geom_point() + 
         #geom_hline(yintercept = 3.5) + 

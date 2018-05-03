@@ -98,26 +98,12 @@ plotly.rating
 
 # Publish to plot_ly
 
-Sys.setenv("plotly_username"="erikabraithwaite")
-Sys.setenv("plotly_api_key"="jMBUykvGl9SN1uypp7jZ")
-api_create(plotly.rating, filename = "plotly-rating")
-
-
 # save static plot 
 ggsave(rating.plot, filename = 'rating-plot.png', width = 12, height = 8)
 
 # save data 
-saveRDS(rating, file = 'rating.rds')
+#saveRDS(rating, file = 'rating.rds')
 
-# To embed into plotly - I went to the plot, clicked share, clicked iframe link, 
-# copy and pasted into squarespace (embed section, and then click on <> symbol, then paste
-# into popup)
-
-# this is the iframe code that needs to be copied from plotly website and pasted into square space
-# NOTE = ?showlink=false WAS ADDED TO THE URL SO THE BUTTON 'EDIT PLOT' WOULD GO AWAY when embeded 
-# into our website
-
-#<iframe width="800" height="700" frameborder="0" scrolling="no" src="//plot.ly/~erikabraithwaite/28.embed?showlink=false"></iframe>
 
         
         
