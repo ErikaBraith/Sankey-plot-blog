@@ -1,33 +1,27 @@
-# Alluvial plot for blog post     
-# Data from: https://makeup-api.herokuapp.com/
+---
+title: "alluvial-plot"
+author: "Erika Braithwaite"
+date: '2018-05-02'
+output: html_document
+---
 
-
-pacman::p_load(jsonlite, listviewer, tidyr, plotly, ggplot2, factoextra, magrittr,
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load(jsonlite, listviewer, tidyr, plotly, ggplot2, magrittr,
                dplyr, alluvial)
-
-#install.packages('data.table') - choose to install from source
-
-# Download data 
 URL = 'http://makeup-api.herokuapp.com/api/v1/products.json'
 MU = jsonlite::fromJSON(URL) %>% 
         dplyr::select(brand, price, rating, product_type, tag_list)
+```
 
-#saveRDS(MU, file = 'MU.rds')
-
-# View json data 
-jsonedit(MU, mode = "view", elementId = "MU")
-
-
-# Keep selected brands
+```{r data prep healthy, echo = F}
 keep = c('almay', 'annabelle', 'benefit',  'cargo cosmetics', 'clinique', 
          'covergirl', 'dior', 'e.l.f',  "`l'oreal`", 'marcelle', 
          'maybelline', 'nyx', 'physicians formula', 'revlon', 'smashbox', 
          'wet n wild')
 
-# Turn the product tags into a character, keep only complete data 
-# Parse product tags into dummy variables
 complete = MU %>% mutate(tags = as.character(tag_list), 
-                         gluten = ifelse(grepl('Gluten', tags), 'no gluten', 'gluten'), 
+                         gluten = ifelse(grepl('Gluten', tags), 'gluten_free', 'gluten'), 
                          natural = ifelse(grepl('Natural', tags), 'natural', 'non-natural'), 
                          canadian = ifelse(grepl('Canadian', tags), 'Canadian', 'non-Canadian')) %>% 
         na.omit() %>% 
@@ -48,22 +42,34 @@ healthy.dat = complete %>% select(cols) %>%
         summarise(count = n()) %>% 
         data.frame()
 
-# Alluvial plot for 'healthiness' of makeup products collapsed over types and brands
+```
 
+## How healthy is your makeup?
+
+Anyone who knows me knows that I love makeup. It's a strange addiction that I can't quite explain: the artistry, the colors, the smells - I adore it all. So when I randomly stumbled across a [makeup API!](https://makeup-api.herokuapp.com/), I could not help but play with the data! 
+
+
+Restricting my analysis to some of the most common brands found in Canadian drugstores, I ended up with 194 products from 10 different brands. The data contained tags indicating whether a product was 1) Gluten free, 2) Natural, and 3) Canadian. I used R's [alluvial package](https://cran.r-project.org/web/packages/alluvial/vignettes/alluvial.html) which is useful for plotting categorical data.  
+
+
+```{r alluvial plot, echo = F}
 alluvial(healthy.dat[,1:4], freq=healthy.dat$count,
          col = ifelse(healthy.dat$count== "151", "orange", "grey"),
          border = ifelse(healthy.dat$count == "151", "orange", "grey"),
-         cex = 0.9, 
+         cex = 0.7, 
          cex.axis = 0.9, 
          axis_labels = c('Gluten \ncontent', 'Natural', 'Canadian', '# of \nproducts')
 )
 
+# plot saved interactively
+```
 
-# saved interactively 
 
-# How do individual brands perform
-# 333 products with complete information on brand, price and ratings 
+Next I wanted to look at makeup ratings by brand and product type. Since most of the brands were considered low- to mid-range in terms of price, I was curious to know whether there would be of variability across brands. I did not have access to higher end brands like Dior or Guerlain, but my guess is that price is often conflated with quality since it is easy to assume that paying more ensures a better product. I have a good deal of thoughts and feelings about that theory. For an in-depth discussion about the 'value' of high end makeup, please contact me directly at erika[at]precision-analytics.ca. 
 
+I plotted ratings against price in order to see how brands compared using ggplotly. Splitting the plot area into quadrants gives me a rough sense of how brands cluster together. 
+
+```{r data prep ratings, echo = F}
 rating = MU %>% select(brand, price, rating) %>% 
         filter(brand %in% keep) %>% 
         na.omit() %>% 
@@ -71,58 +77,23 @@ rating = MU %>% select(brand, price, rating) %>%
         mutate(price = as.numeric(price), 
                brand = as.factor(brand)) %>% 
         data.frame()
+```
 
-# Plot ratings versus prices 
+
+```{r rating-price plot, echo = F}
 rating.plot = ggplot(data = rating, aes(x = price, y = rating,  colour = brand)) +
         geom_point(alpha = 0.6) + 
         geom_hline(yintercept = 3.5) + 
         geom_vline(xintercept = 20) + 
         theme(legend.position = 'none') + 
-        labs(x = 'Price', 
+        labs(x = 'Price ($)', 
              y = 'Rating (1-5)') + 
         geom_label(aes(label = brand)) + 
         scale_color_brewer(palette="Paired") + 
         theme_bw() + 
         ggtitle('Price and ratings of makeup brands') + 
         theme(legend.title=element_blank())
-
-rating.plot
-plotly.rating = ggplotly(rating.plot)
-
-
-# set y-axis  label position 
-#plotly.rating[["x"]][["layout"]][["annotations"]][[3]][["y"]] <- 0.93
-plotly.rating %<>% layout(margin = list(l = 120, b=70))
-
-plotly.rating
-
-# Publish to plot_ly
-
-Sys.setenv("plotly_username"="erikabraithwaite")
-Sys.setenv("plotly_api_key"="jMBUykvGl9SN1uypp7jZ")
-api_create(plotly.rating, filename = "plotly-rating")
-
-
-# save static plot 
-ggsave(rating.plot, filename = 'rating-plot.png', width = 12, height = 8)
-
-# save data 
-saveRDS(rating, file = 'rating.rds')
-
-# To embed into plotly - I went to the plot, clicked share, clicked iframe link, 
-# copy and pasted into squarespace (embed section, and then click on <> symbol, then paste
-# into popup)
-
-# this is the iframe code that needs to be copied from plotly website and pasted into square space
-# NOTE = ?showlink=false WAS ADDED TO THE URL SO THE BUTTON 'EDIT PLOT' WOULD GO AWAY when embeded 
-# into our website
-
-#<iframe width="800" height="700" frameborder="0" scrolling="no" src="//plot.ly/~erikabraithwaite/28.embed?showlink=false"></iframe>
-
-        
-        
-
-
+```
 
 
 
