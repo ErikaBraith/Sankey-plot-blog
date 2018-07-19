@@ -1,43 +1,53 @@
 # K-means clustering - price and ratings for makeup brands
 
-pacman::pload(dplyr, ggplot2, cluster)
-readRDS(rating)
+pacman::p_load(tidyr, dplyr, ggplot2, cluster, factoextra, magrittr, gridExtra)
 
+rating = readRDS('rating.rds')
 
-## K-means with scaled data 
-rate = scale(rating)
+# Data prep -------------------------------------------------
+# Set seed 
+set.seed(12345)
 
+# Plot original data 
 
-# Make a screeplot
-source(gap-statistic.R)
+price.plot =  ggplot(dat = rating) + 
+        geom_histogram(aes(x = price))
 
-scree.dat = clusGap(rate, kmeans, 10, B = 100, verbose = interactive())
+rating.plot = ggplot(dat = rating) + 
+        geom_histogram(aes(x = rating))
+
+# Scale data 
+rating.scaled = scale(rating[,2:3])
+# Create data frame from scaled matrix to plot
+rating.scaled.df = data.frame(rating.scaled)
+
+price.plot.scaled = ggplot(dat = rating.scaled.df) + 
+        geom_histogram(aes(x = price)) + 
+        labs(x = 'scaled price')
+
+rating.plot.scaled = ggplot(dat = rating.scaled.df) + 
+        geom_histogram(aes(x = rating)) + 
+        labs(x = 'scaled rating')
+
+# Plot together
+dist.plot = grid.arrange(price.plot, rating.plot, price.plot.scaled, rating.plot.scaled)
+ggsave(dist.plot, filename = 'dist-plot.png', width = 8, height = 6)
+
+# K-means ---------------------------------------------------
+# Make a screeplot of gap statistics for 1-10 clusters
+source('gap-statistic.R')
 png("scree-plot.png")
-gap_statistic(rate)
+gap_statistic(rating.scaled)
 dev.off()
 
 
-ratingCluster = kmeans(rate, 3, nstart = 20)
-ratingCluster
-table(ratingCluster$cluster,rating$brand)
-
-ratingCluster$cluster =  as.factor(ratingCluster$cluster)
-
-scaled.rate = data.frame(rate)
-
-# I want to eventually add elipses around the cluster
-cluster.plot = ggplot(data = scaled.rate, aes(x = price, y = rating, colour = ratingCluster$cluster)) +
-        geom_point() + 
-        #geom_hline(yintercept = 3.5) + 
-        #geom_vline(xintercept = 20) + 
-        theme(legend.position = 'none') + 
-        labs(x = 'Scaled price', 
-             y = 'Scaled ratings') + 
-        #geom_label(aes(label = brand)) + 
-        scale_color_brewer(palette="Dark2") + 
-        theme_bw() + 
-        ggtitle('K means')
-
+# Specify 3 cluster
+ratingCluster = kmeans(rating.scaled, 3, nstart = 20)
+cluster.plot = fviz_cluster(ratingCluster, rating[, 2:3], ellipse.type = "norm", geom = 'point')
 cluster.plot
 
 ggsave(cluster.plot, filename = 'cluster-plot.png', width = 8, height = 6)
+
+
+
+

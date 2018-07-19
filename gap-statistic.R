@@ -1,10 +1,10 @@
 
 pacman::p_load(plyr, dplyr, ggplot2, scales)
 
-# From: https://github.com/echen/gap-statistic/blob/master/simulations.R
+# https://github.com/echen/gap-statistic/blob/master/gap-statistic.R
 
 # Given a matrix `data`, where rows are observations and columns are individual dimensions, compute and plot the gap statistic (according to a uniform reference distribution).
-gap_statistic = function(data, min_num_clusters = 1, max_num_clusters = 10, num_reference_bootstraps = 10) {
+gap_statistic = function(data, min_num_clusters = 1, max_num_clusters = 10, num_reference_bootstraps = 100) {
         num_clusters = min_num_clusters:max_num_clusters
         actual_dispersions = maply(num_clusters, function(n) dispersion(data, n))
         ref_dispersions = maply(num_clusters, function(n) reference_dispersion(data, n, num_reference_bootstraps))
